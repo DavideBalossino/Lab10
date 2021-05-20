@@ -8,11 +8,13 @@ import java.net.URL;
 import java.util.ResourceBundle;
 
 import it.polito.tdp.rivers.model.Model;
+import it.polito.tdp.rivers.model.River;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.event.ActionEvent;
 
 public class FXMLController {
 	
@@ -25,7 +27,7 @@ public class FXMLController {
     private URL location;
 
     @FXML // fx:id="boxRiver"
-    private ComboBox<?> boxRiver; // Value injected by FXMLLoader
+    private ComboBox<River> boxRiver; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtStartDate"
     private TextField txtStartDate; // Value injected by FXMLLoader
@@ -47,6 +49,42 @@ public class FXMLController {
 
     @FXML // fx:id="txtResult"
     private TextArea txtResult; // Value injected by FXMLLoader
+    
+    @FXML
+    void tendina(ActionEvent event) {
+    	River r=boxRiver.getValue();
+    	if(r!=null) {
+    		model.setFiume(r);
+    		txtStartDate.setText(""+r.getFlows().get(0).getDay());
+    		txtEndDate.setText(""+r.getFlows().get(r.getFlows().size()-1).getDay());
+    		txtNumMeasurements.setText(""+r.getFlows().size());
+    		txtFMed.setText(""+String.format("%.2f", r.getFlowAvg()));
+    	}
+    } 
+    
+    @FXML
+    void doSimula(ActionEvent event) {
+    	String s_k=txtK.getText();
+    	River r=boxRiver.getValue();
+    	if(r==null) {
+    		txtResult.setText("Selezionare un fiume");
+    		return;
+    	}
+    	if(s_k=="") {
+    		txtResult.setText("Inserire il numero k");
+    		return;
+    	}
+    	try {
+    		double k=Double.parseDouble(s_k);
+    		model.simula(r.getFlowAvg(), r.getFlows().get(0).getDay(),r.getFlows().get(r.getFlows().size()-1).getDay() , k, r.getFlows());
+    		txtResult.appendText("Il numero di giorni in cui non si e potuta garantire l'erogazione minima e : "+model.getGiorniNoMinimo()+"\n");
+    		txtResult.appendText("La media dell'occupazione del bacino e: "+String.format("%.2f", model.mediaC()));
+    	} catch(NumberFormatException e) {
+    		txtResult.setText("Inserire un numero");
+    	}
+    }
+    
+    
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
     void initialize() {
@@ -62,5 +100,6 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	boxRiver.getItems().addAll(model.getAllFiumi());
     }
 }
